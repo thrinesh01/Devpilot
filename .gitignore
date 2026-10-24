@@ -1,0 +1,36 @@
+﻿# Environment variables and secrets
+.env
+.env.*
+!.env.example
+**/application-local.properties
+**/application-secrets.properties
+**/credentials.json
+
+# Java / Maven build output
+**/target/
+**/build/
+.mvn/wrapper/maven-wrapper.jar
+
+# Node / Next.js
+**/node_modules/
+**/.next/
+**/out/
+**/coverage/
+**/*.tsbuildinfo
+
+# IDE and editor files
+.idea/
+**/.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.factorypath
+.settings/
+.project
+
+# Logs and operating-system files
+*.log
+.DS_Store
+Thumbs.db
