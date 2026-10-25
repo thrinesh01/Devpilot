@@ -74,7 +74,12 @@ export function useStreamChat(sessionId: string | null) {
 
       queryClient.setQueryData<ChatMessage[]>(
         queryKeys.chat.messages(sessionId),
-        (prev) => [...(prev ?? []), optimistic]
+        (prev) => {
+          const list = prev ?? [];
+          // Avoid adding a duplicate optimistic entry if one is already present.
+          if (list.some((m) => m.id === optimisticId)) return list;
+          return [...list, optimistic];
+        }
       );
 
       setStreaming(true);
@@ -86,10 +91,30 @@ export function useStreamChat(sessionId: string | null) {
           onUserMessage: (message) => {
             queryClient.setQueryData<ChatMessage[]>(
               queryKeys.chat.messages(sessionId),
-              (prev) => [
-                ...(prev ?? []).filter((m) => m.id !== optimisticId),
-                message,
-              ]
+              (prev) => {
+                const list = prev ?? [];
+                const hadOptimistic = list.some(
+                  (m) => m.id === optimisticId
+                );
+                // Drop the optimistic placeholder and any stale copy of the
+                // persisted message (e.g. from a background refetch) so we
+                // never end up with duplicate keys.
+                const base = list.filter(
+                  (m) => m.id !== optimisticId && m.id !== message.id
+                );
+                if (hadOptimistic) {
+                  const index = list.findIndex((m) => m.id === optimisticId);
+                  const next = [...base];
+                  next.splice(Math.min(index, next.length), 0, message);
+                  return next;
+                }
+                if (list.some((m) => m.id === message.id)) {
+                  return list.map((m) =>
+                    m.id === message.id ? message : m
+                  );
+                }
+                return [...base, message];
+              }
             );
           },
           onToken: (token) => {
@@ -98,9 +123,24 @@ export function useStreamChat(sessionId: string | null) {
           onAssistantMessage: (message) => {
             queryClient.setQueryData<ChatMessage[]>(
               queryKeys.chat.messages(sessionId),
-              (prev) => [...(prev ?? []), message]
+              (prev) => {
+                const list = prev ?? [];
+                // Idempotent append: update in place if the message is already
+                // present instead of appending a duplicate.
+                if (list.some((m) => m.id === message.id)) {
+                  return list.map((m) =>
+                    m.id === message.id ? message : m
+                  );
+                }
+                return [...list, message];
+              }
             );
             setStreamText("");
+          },
+          onDone: () => {
+            void queryClient.invalidateQueries({
+              queryKey: queryKeys.chat.messages(sessionId),
+            });
           },
         });
       } catch (err) {
