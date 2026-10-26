@@ -148,6 +148,18 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Ensure the frontend API URL points to the running backend at `http://localhost:8080`.
 
+### Production deployment (Render)
+
+For the frontend and backend to share the same origin, deploy the Next.js app with `BACKEND_URL=https://<backend-service>.onrender.com`. The frontend then proxies `/api`, `/oauth2`, and `/login/oauth2` to the backend, so the session cookie is set on the frontend origin and is not blocked as a third-party cookie.
+
+Set these backend environment variables:
+- `SESSION_COOKIE_SAME_SITE=None`
+- `SESSION_COOKIE_SECURE=true`
+- `FRONTEND_URL=https://<frontend-service>.onrender.com`
+- `CORS_ALLOWED_ORIGINS=https://<frontend-service>.onrender.com`
+
+Register the GitHub OAuth callback URL as `https://<frontend-service>.onrender.com/login/oauth2/code/github`.
+
 ### 6. Use DevPilot
 
 1. Sign in with GitHub.

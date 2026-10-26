@@ -1,6 +1,6 @@
 package devPilot.backend.config;
 
-import org.springframework.beans.factory.annotation.Value;	
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,14 +17,32 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationFa
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 
 import devPilot.backend.security.GithubOAuth2UserService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
     private final GithubOAuth2UserService gitHubOAuth2UserService;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
+    @Value("${SESSION_COOKIE_SAME_SITE:lax}")
+    private String sessionCookieSameSite;
+
+    @Value("${SESSION_COOKIE_SECURE:false}")
+    private String sessionCookieSecure;
+
+    @PostConstruct
+    void logStartupConfig() {
+        log.info("DevPilot auth config: frontendUrl={}, sessionCookieSameSite={}, sessionCookieSecure={}",
+                frontendUrl, sessionCookieSameSite, sessionCookieSecure);
+    }
 
     @Bean
     SecurityFilterChain securityFilterChain(
@@ -66,17 +84,27 @@ public class SecurityConfig {
 
     @Bean
     AuthenticationSuccessHandler oauth2SuccessHandler(
-            @Value("${app.frontend-url}") String frontendUrl) {
-        SimpleUrlAuthenticationSuccessHandler handler = new SimpleUrlAuthenticationSuccessHandler();
-        handler.setDefaultTargetUrl(frontendUrl + "/auth/callback");
-        return handler;
+            @Value("${app.frontend-url}") String configuredFrontendUrl) {
+        String normalizedFrontendUrl = configuredFrontendUrl.replaceAll("/+$", "");
+        String redirectTarget = normalizedFrontendUrl + "/auth/callback";
+        SimpleUrlAuthenticationSuccessHandler delegate = new SimpleUrlAuthenticationSuccessHandler();
+        delegate.setDefaultTargetUrl(redirectTarget);
+        return (request, response, authentication) -> {
+            log.info("OAuth2 login success: sessionPresent={}, redirectTarget={}",
+                    request.getSession(false) != null, redirectTarget);
+            delegate.onAuthenticationSuccess(request, response, authentication);
+        };
     }
 
     @Bean
     AuthenticationFailureHandler oauth2FailureHandler(
-            @Value("${app.frontend-url}") String frontendUrl) {
+            @Value("${app.frontend-url}") String configuredFrontendUrl) {
+        String normalizedFrontendUrl = configuredFrontendUrl.replaceAll("/+$", "");
         SimpleUrlAuthenticationFailureHandler handler = new SimpleUrlAuthenticationFailureHandler();
-        handler.setDefaultFailureUrl(frontendUrl + "/login?error=oauth_failed");
-        return handler;
+        handler.setDefaultFailureUrl(normalizedFrontendUrl + "/login?error=oauth_failed");
+        return (request, response, exception) -> {
+            log.warn("OAuth2 login failure: {}", exception.getClass().getSimpleName());
+            handler.onAuthenticationFailure(request, response, exception);
+        };
     }
 }
