@@ -60,7 +60,7 @@ export function ChatMessages({
         )}
 
         <MessageGroup>
-          {messages.map((message) => {
+          {messages.map((message, index) => {
             const isUser = message.role === "USER";
             return (
               <Message key={message.id} align={isUser ? "end" : "start"}>

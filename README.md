@@ -4,6 +4,11 @@
 
 DevPilot indexes repository source code and uses relevant code context to answer developers' questions through an AI-powered chat interface.
 
+## Live Demo
+
+- **Frontend:** https://devpilot-frontend-zhap.onrender.com
+- **Backend:** https://devpilot-a5su.onrender.com
+
 ## Features
 
 - GitHub OAuth authentication
@@ -21,6 +26,16 @@ DevPilot indexes repository source code and uses relevant code context to answer
 - **Database:** PostgreSQL, pgvector
 - **Authentication:** GitHub OAuth 2.0
 - **Infrastructure:** Docker Compose
+
+## Screenshots
+
+![Homepage](screenshots/S1.jpeg)
+
+![Login](screenshots/S2.jpeg)
+
+![Dashboard](screenshots/S3.jpeg)
+
+![Chat](screenshots/S4.jpeg)
 
 ## Architecture
 

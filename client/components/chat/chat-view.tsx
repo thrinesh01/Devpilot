@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
-
+import { cn } from "@/lib/utils";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { IndexingState } from "@/components/chat/indexing-state";
 import { AppShell } from "@/components/layout/app-shell";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useChatMessages,
@@ -88,7 +88,13 @@ export function ChatView({ repoId }: { repoId: string }) {
           <p className="text-sm text-muted-foreground">
             {(repoQuery.error as Error)?.message ?? "Repository not found"}
           </p>
-          <Button render={<Link href="/dashboard" />}>Back to dashboard</Button>
+          <Link
+            href="/dashboard"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            <ArrowLeft data-icon="inline-start" />
+            Repos
+          </Link>
         </div>
       </AppShell>
     );
@@ -105,10 +111,15 @@ export function ChatView({ repoId }: { repoId: string }) {
           : "Waiting for indexing to finish"
       }
       actions={
-        <Button variant="outline" size="sm" render={<Link href="/dashboard" />}>
+        <Link
+          href="/dashboard"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" })
+          )}
+        >
           <ArrowLeft data-icon="inline-start" />
           Repos
-        </Button>
+        </Link>
       }
     >
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
